@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Badge Barcode Generator</title>
+<title>UPC-A Generator</title>
 
 <!-- JsBarcode -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -109,10 +109,10 @@ button:disabled{
 
 <body>
 <div class="card">
-  <h1>Badge Barcode Generator</h1>
+  <h1>UPC-A Generator</h1>
 
   <div class="row">
-    <input id="idInput" class="mono" placeholder="Employee ID#">
+    <input id="idInput" class="mono" placeholder="Employee ID (digits only)">
     <button id="btnGen">Generate</button>
     <button id="btnPdf" class="secondary" disabled>PDF</button>
     <button id="btnJpg" class="secondary" disabled>JPG</button>
@@ -123,7 +123,9 @@ button:disabled{
   </div>
 
   <div class="meta">
+    <div class="mono">UPC-A: <span id="textOut">—</span></div>
     <div>Developed by <strong>Gary Evrisov</strong></div>
+  </div>
 </div>
 
 <script>
@@ -181,7 +183,7 @@ function render(){
     format:"upc",
     displayValue:false,
     flat:true,
-    height:70,
+    height:140,
     width:2,
     margin:0,
     background:"#fff",
