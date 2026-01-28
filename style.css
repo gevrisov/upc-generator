@@ -116,6 +116,11 @@ button:disabled{
   margin-top: 16px;
   color: var(--muted);
   font-size: 14px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .mono{
