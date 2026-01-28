@@ -1,293 +1,257 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Badge Barcode Generator</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UPC-A Generator</title>
 
-  <!-- JsBarcode -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<!-- JsBarcode -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-  <!-- jsPDF -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f1115;
+  --card:#161a22;
+  --stroke:#262c3a;
+  --input:#0f1320;
+  --text:#e9edf5;
+  --blue:#2b6cff;
+}
 
-  <style>
-    :root{
-      --border: 3px;
-      --pad: 18px;       /* quiet zones + “в прямоугольнике” */
-    }
-    body{
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 0;
-      padding: 24px;
-      background: #0f1115;
-      color: #e9edf5;
-    }
-    .card{
-      max-width: 920px;
-      margin: 0 auto;
-      background:#161a22;
-      border:1px solid #262c3a;
-      border-radius: 14px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    h1{
-      margin: 0 0 12px 0;
-      font-size: 20px;
-      letter-spacing: .2px;
-    }
-    .row{
-      display:flex;
-      gap:12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    input{
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #2a3142;
-      background: #0f1320;
-      color: #e9edf5;
-      min-width: 240px;
-      font-size: 16px;
-      outline: none;
-    }
-    input:focus{
-      border-color:#4c72ff;
-    }
-    button{
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid transparent;
-      background:#2b6cff;
-      color:#fff;
-      cursor:pointer;
-      font-size: 14px;
-      font-weight: 700;
-    }
-    button.secondary{
-      background:#252a36;
-      border:1px solid #323a4c;
-      font-weight: 600;
-    }
-    button:disabled{
-      opacity: .45;
-      cursor:not-allowed;
-    }
+body{
+  margin:0;
+  padding:24px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
 
-    /* “Прямоугольник” вокруг UPC */
-    #barcodeBox{
-      display:inline-block;         /* по умолчанию, но мы прячем через JS до ввода */
-      margin-top: 18px;
-      padding: var(--pad);
-      background:#fff;
-      border: var(--border) solid #000;
-      border-radius: 10px;
-      max-width: 100%;
-    }
-    #svgBarcode{
-      display:block;
-    }
+.card{
+  max-width:1100px;
+  margin:auto;
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  padding:18px;
+}
 
-    .meta{
-      margin-top: 12px;
-      display:flex;
-      justify-content: space-between; /* два угла */
-      gap: 12px;
-      flex-wrap: wrap;
-      font-size: 13px;
-      opacity: .9;
-    }
-    .mono{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-    }
-  </style>
+h1{ margin:0 0 14px; font-size:20px; }
+
+.row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+input{
+  flex:1;
+  min-width:220px;
+  background:var(--input);
+  border:1px solid #2a3142;
+  color:var(--text);
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:16px;
+}
+
+button{
+  padding:12px 14px;
+  border-radius:12px;
+  border:0;
+  background:var(--blue);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+button.secondary{
+  background:#252a36;
+  border:1px solid #323a4c;
+}
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+/* barcode */
+#barcodeBox{
+  display:none;
+  margin-top:20px;
+  padding:12px;
+  background:#fff;
+  border:2px solid #000;
+  border-radius:12px;
+  width:100%;
+}
+
+#svgBarcode{
+  display:block;
+  width:100%;
+  height:auto;
+}
+
+.meta{
+  margin-top:14px;
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  font-size:13px;
+  opacity:.85;
+}
+
+.mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+</style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>Badge Barcode Generator</h1>
+<div class="card">
+  <h1>UPC-A Generator</h1>
 
-    <div class="row">
-      <input id="idInput" class="mono" placeholder="Employee ID (digits only)" />
-      <button id="btnRender">Generate</button>
-      <button id="btnPdf" class="secondary" disabled>PDF</button>
-      <button id="btnJpg" class="secondary" disabled>JPG</button>
-    </div>
-
-    <div id="barcodeBox">
-      <svg id="svgBarcode"></svg>
-    </div>
-
-    <div class="meta">
-      <div>Developed by <strong>Gary Evrisov</strong></div>
-    </div>
+  <div class="row">
+    <input id="idInput" class="mono" placeholder="Employee ID#">
+    <button id="btnGen">Generate</button>
+    <button id="btnPdf" class="secondary" disabled>PDF</button>
+    <button id="btnJpg" class="secondary" disabled>JPG</button>
   </div>
 
-  <script>
-    const $ = (id) => document.getElementById(id);
+  <div id="barcodeBox">
+    <svg id="svgBarcode"></svg>
+  </div>
 
-    const svgEl = $("svgBarcode");
-    const btnPdf = $("btnPdf");
-    const btnJpg = $("btnJpg");
-    const textValue = $("textValue");
-    const barcodeBox = $("barcodeBox");
+  <div class="meta">
+    <div class="mono">UPC-A: <span id="textOut">—</span></div>
+    <div>Developed by <strong>Gary Evrisov</strong></div>
+  </div>
+</div>
 
-    let currentUPC = "";
+<script>
+const $ = id => document.getElementById(id);
 
-    // Скрыть штрихкод до ввода
-    barcodeBox.style.display = "none";
+const input = $("idInput");
+const svg = $("svgBarcode");
+const box = $("barcodeBox");
+const out = $("textOut");
+const btnPdf = $("btnPdf");
+const btnJpg = $("btnJpg");
 
-    function digitsOnly(v){
-      return (v || "").trim().replace(/\D+/g, "");
-    }
+let currentUPC = "";
 
-    // ===== UPC-A check digit (GS1 Mod-10) =====
-    function upcCheckDigit(first11){
-      let sumOdd = 0;
-      let sumEven = 0;
+/* ---------- UPC-A helpers ---------- */
+function digitsOnly(v){ return (v||"").replace(/\D+/g,""); }
 
-      for(let i=0;i<11;i++){
-        const d = first11.charCodeAt(i) - 48;
-        if(i % 2 === 0) sumOdd += d; else sumEven += d;
-      }
-      const total = (sumOdd * 3) + sumEven;
-      const mod = total % 10;
-      return String((10 - mod) % 10);
-    }
+function checkDigit(first11){
+  let odd=0, even=0;
+  for(let i=0;i<11;i++){
+    const d = first11.charCodeAt(i)-48;
+    (i%2===0)? odd+=d : even+=d;
+  }
+  return (10 - ((odd*3+even)%10)) % 10;
+}
 
-    // Build UPC-A from any-length digits:
-    // - if 12 digits: use as-is
-    // - else: zero-pad to 11 digits, compute check digit => 12 digits
-    function buildUPC(raw){
-      const digits = digitsOnly(raw);
-      if(!digits) return null;
+function buildUPC(raw){
+  const d = digitsOnly(raw);
+  if(!d) return "";
+  if(d.length===12) return d;
+  const base = d.padStart(11,"0").slice(-11);
+  return base + checkDigit(base);
+}
 
-      if(digits.length === 12) return digits;
+/* ---------- render ---------- */
+function render(){
+  const raw = input.value;
+  const upc = buildUPC(raw);
 
-      const base11 = digits.padStart(11, "0").slice(-11);
-      return base11 + upcCheckDigit(base11);
-    }
+  if(!upc){
+    box.style.display="none";
+    out.textContent="—";
+    btnPdf.disabled=true;
+    btnJpg.disabled=true;
+    return;
+  }
 
-    // ===== Render UPC-A =====
-    function render(){
-      const raw = $("idInput").value;
-      const upc = buildUPC(raw);
+  currentUPC = upc;
+  out.textContent = currentUPC;
+  box.style.display="block";
 
-      // если пусто/невалидно — спрятать всё
-      if(!upc || upc.length !== 12){
-        barcodeBox.style.display = "none";
-        textValue.textContent = "—";
-        btnPdf.disabled = true;
-        btnJpg.disabled = true;
-        while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
-        currentUPC = "";
-        return;
-      }
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
 
-      currentUPC = upc;
-      textValue.textContent = currentUPC;
+  JsBarcode(svg, currentUPC, {
+    format:"upc",
+    displayValue:false,
+    flat:true,
+    height:140,
+    width:2,
+    margin:0,
+    background:"#fff",
+    lineColor:"#000"
+  });
 
-      // показать контейнер
-      barcodeBox.style.display = "inline-block";
+  /* === MAKE SVG RESPONSIVE === */
+  svg.removeAttribute("width");
+  svg.removeAttribute("height");
+  const bb = svg.getBBox();
+  svg.setAttribute("viewBox", `0 0 ${bb.width} ${bb.height}`);
+  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
 
-      // очистить SVG
-      while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+  btnPdf.disabled=false;
+  btnJpg.disabled=false;
+}
 
-      // UPC-A (GS1) bars only, flat bars (no tall guards)
-      JsBarcode(svgEl, currentUPC, {
-        format: "upc",
-        displayValue: false,
-        flat: true,
-        height: 130,   // “как Code128 по высоте”
-        width: 2,
-        margin: 0,
-        background: "#ffffff",
-        lineColor: "#000000"
-      });
+/* ---------- PDF ---------- */
+function downloadPDF(){
+  if(!currentUPC) return;
+  const { jsPDF } = window.jspdf;
+  const r = box.getBoundingClientRect();
+  const pdf = new jsPDF({unit:"pt", format:[r.width*0.75,r.height*0.75]});
 
-      btnPdf.disabled = false;
-      btnJpg.disabled = false;
-    }
+  const xml = new XMLSerializer().serializeToString(box);
+  const img = new Image();
+  img.onload = ()=>{
+    const c=document.createElement("canvas");
+    c.width=img.width; c.height=img.height;
+    const ctx=c.getContext("2d");
+    ctx.fillStyle="#fff";
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.drawImage(img,0,0);
+    pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,pdf.internal.pageSize.getWidth(),pdf.internal.pageSize.getHeight());
+    pdf.save(`UPC-A_${currentUPC}.pdf`);
+  };
+  img.src=URL.createObjectURL(new Blob([xml],{type:"image/svg+xml"}));
+}
 
-    // ===== PDF export =====
-    function downloadPDF(){
-      const { jsPDF } = window.jspdf;
+/* ---------- JPG 600 DPI ---------- */
+function downloadJPG(){
+  if(!currentUPC) return;
+  const r = box.getBoundingClientRect();
+  const DPI=600;
+  const w=Math.round((r.width/96)*DPI);
+  const h=Math.round((r.height/96)*DPI);
 
-      // Берем размер реально видимого прямоугольника
-      const r = barcodeBox.getBoundingClientRect();
-      const wPt = r.width * 72 / 96;
-      const hPt = r.height * 72 / 96;
+  const xml=new XMLSerializer().serializeToString(box);
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement("canvas");
+    c.width=w; c.height=h;
+    const ctx=c.getContext("2d");
+    ctx.fillStyle="#fff";
+    ctx.fillRect(0,0,w,h);
+    ctx.drawImage(img,0,0,w,h);
+    const a=document.createElement("a");
+    a.href=c.toDataURL("image/jpeg",1);
+    a.download=`UPC-A_${currentUPC}_600dpi.jpg`;
+    a.click();
+  };
+  img.src=URL.createObjectURL(new Blob([xml],{type:"image/svg+xml"}));
+}
 
-      const pdf = new jsPDF({ unit: "pt", format: [wPt, hPt] });
-
-      // SVG -> PNG -> PDF (стабильно)
-      const xml = new XMLSerializer().serializeToString(barcodeBox);
-      const img = new Image();
-
-      img.onload = () => {
-        const c = document.createElement("canvas");
-        c.width = Math.ceil(img.width);
-        c.height = Math.ceil(img.height);
-        const ctx = c.getContext("2d");
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0,0,c.width,c.height);
-        ctx.drawImage(img, 0, 0);
-
-        const png = c.toDataURL("image/png");
-        pdf.addImage(png, "PNG", 0, 0, wPt, hPt);
-        pdf.save(`UPC-A_${currentUPC}.pdf`);
-      };
-
-      const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
-      img.src = URL.createObjectURL(blob);
-    }
-
-    // ===== JPG export (600 DPI effective) =====
-    function downloadJPG(){
-      const DPI = 600;
-
-      // Берем размер контейнера в CSS px и переводим в “эффективные” пиксели 600dpi
-      const r = barcodeBox.getBoundingClientRect();
-      const widthIn = r.width / 96;
-      const heightIn = r.height / 96;
-
-      const outW = Math.max(1, Math.round(widthIn * DPI));
-      const outH = Math.max(1, Math.round(heightIn * DPI));
-
-      const xml = new XMLSerializer().serializeToString(barcodeBox);
-      const img = new Image();
-
-      img.onload = () => {
-        const c = document.createElement("canvas");
-        c.width = outW;
-        c.height = outH;
-        const ctx = c.getContext("2d");
-
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, outW, outH);
-
-        ctx.drawImage(img, 0, 0, outW, outH);
-
-        const a = document.createElement("a");
-        a.href = c.toDataURL("image/jpeg", 1.0);
-        a.download = `UPC-A_${currentUPC}_600dpi.jpg`;
-        a.click();
-      };
-
-      const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
-      img.src = URL.createObjectURL(blob);
-    }
-
-    $("btnRender").addEventListener("click", render);
-    btnPdf.addEventListener("click", downloadPDF);
-    btnJpg.addEventListener("click", downloadJPG);
-
-    // Enter = Generate
-    $("idInput").addEventListener("keydown", (e) => {
-      if(e.key === "Enter") render();
-    });
-  </script>
+$("btnGen").onclick=render;
+btnPdf.onclick=downloadPDF;
+btnJpg.onclick=downloadJPG;
+input.addEventListener("keydown",e=>{ if(e.key==="Enter") render(); });
+</script>
 </body>
 </html>
