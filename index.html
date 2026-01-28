@@ -151,32 +151,34 @@ function buildUPC(raw){
 /* ===== Render UPC-A ===== */
 function render(){
   const raw = $("idInput").value.trim();
+  const val = sanitizeValue(raw);
 
-  if(!raw){
-    $("barcodeBox").classList.remove("show");
+  if(!val){
+    $("barcodeBox").style.display = "none";   // если поле пустое — скрываем
     textValue.textContent = "—";
-    btnPdf.disabled = true;
-    btnJpg.disabled = true;
     return;
   }
 
-  currentUPC = buildUPC(raw);
+  $("barcodeBox").style.display = "inline-block"; // <-- ВОТ ЭТО важно (показ после Generate)
+
+  currentUPC = buildUPC(val);
   textValue.textContent = currentUPC;
 
-  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  while(svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
 
-  JsBarcode(svg, currentUPC, {
-    format: "upc",          // 🔥 СТРОГО UPC-A
-    displayValue: false,    // без цифр под кодом
-    flat: true,             // все полосы одинаковой высоты
-    height: 130,            // визуально как “прямоугольник”
+  JsBarcode(svgEl, currentUPC, {
+    format: "upc",
+    displayValue: false,
+    flat: true,
+    height: 130,
     width: 2,
     margin: 0,
     background: "#ffffff",
     lineColor: "#000000"
   });
 
-  $("barcodeBox").classList.add("show);
+  const serializer = new XMLSerializer();
+  currentSVG = serializer.serializeToString(svgEl);
 
   btnPdf.disabled = false;
   btnJpg.disabled = false;
