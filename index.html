@@ -154,12 +154,14 @@ function render(){
   const val = sanitizeValue(raw);
 
   if(!val){
-    $("barcodeBox").style.display = "none";   // если поле пустое — скрываем
+    $("barcodeBox").classList.remove("show");
     textValue.textContent = "—";
+    btnPdf.disabled = true;
+    btnJpg.disabled = true;
     return;
   }
 
-  $("barcodeBox").style.display = "inline-block"; // <-- ВОТ ЭТО важно (показ после Generate)
+  $("barcodeBox").classList.add("show");
 
   currentUPC = buildUPC(val);
   textValue.textContent = currentUPC;
@@ -177,9 +179,7 @@ function render(){
     lineColor: "#000000"
   });
 
-  const serializer = new XMLSerializer();
-  currentSVG = serializer.serializeToString(svgEl);
-
+  currentSVG = new XMLSerializer().serializeToString(svgEl);
   btnPdf.disabled = false;
   btnJpg.disabled = false;
 }
