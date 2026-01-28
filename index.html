@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Badge Barcode Generator</title>
+  <title>UPC-A Generator</title>
 
   <style>
     :root {
@@ -103,12 +103,16 @@
       display:block;              /* removes extra baseline whitespace */
     }
 
-    /* optional: make the preview area not force huge whitespace */
+    /* FIX: do NOT stretch the preview row to full width */
     .previewZone{
       display:flex;
       justify-content:center;
       align-items:flex-start;
       padding:8px 0;
+    }
+    .previewZone > div{
+      display:inline-block;       /* KEY: shrink to content so white bg doesn't become huge */
+      width:auto;
     }
 
     .textOut{
@@ -184,10 +188,8 @@
             <svg id="svgBarcode"></svg>
           </div>
 
-          <!-- Text output remains below (as you wanted) -->
           <div class="textOut" id="textOut">—</div>
 
-          <!-- optional vertical credit -->
           <div class="devTagVertical"><span>Developed by Gary Evrisov</span></div>
         </div>
       </div>
@@ -197,8 +199,6 @@
 <script>
   // ===== UPC-A check digit (GS1 Mod-10) =====
   function calcUpcACheckDigit(first11) {
-    // first11 must be 11 digits
-    // Sum of digits in odd positions (1,3,5,7,9,11) * 3 + sum of digits in even positions (2,4,6,8,10)
     let sumOdd = 0;
     let sumEven = 0;
     for (let i = 0; i < 11; i++) {
@@ -216,11 +216,9 @@
     if (!digits) return null;
 
     if (digits.length === 12) {
-      // assume already full UPC-A
       return digits;
     }
 
-    // pad to 11
     const first11 = digits.padStart(11, "0").slice(-11);
     const cd = calcUpcACheckDigit(first11);
     return first11 + cd;
@@ -229,29 +227,23 @@
   // ===== Barcode rendering (UPC-A, bars only, SAME HEIGHT) =====
   function renderBarcode(upc12) {
     const svg = document.getElementById("svgBarcode");
-
-    // Clear (in case)
     svg.innerHTML = "";
 
-    // IMPORTANT:
-    // - format: "upc"  -> UPC-A
-    // - displayValue: false -> no digits under the barcode (bars only)
-    // - flat: true -> guard bars NOT taller; all bars same height (what you asked)
     JsBarcode(svg, upc12, {
       format: "upc",
       displayValue: false,
-      flat: true,         // makes bars same height (no tall guard bars)
+      flat: true,
       margin: 0,
-      width: 2,           // module width (tweak if needed)
-      height: 120,        // taller look (like Code128 height-wise)
+      width: 2,
+      height: 160,        // CHANGED: taller bars (you asked)
       background: "#ffffff",
       lineColor: "#000000"
     });
   }
 
   // ===== Helpers for export sizing =====
-  function pxToPt(px) { return px * 72 / 96; } // CSS px -> PDF points
-  function pxToIn(px) { return px / 96; }      // CSS px -> inches (browser baseline)
+  function pxToPt(px) { return px * 72 / 96; }
+  function pxToIn(px) { return px / 96; }
 
   function downloadBlob(blob, filename) {
     const a = document.createElement("a");
@@ -270,7 +262,6 @@
     const wrap = document.getElementById("barcodeWrap");
     const svg = document.getElementById("svgBarcode");
 
-    // Size PDF exactly to the visible wrap (tight margins already included via padding mm)
     const r = wrap.getBoundingClientRect();
     const wPt = pxToPt(r.width);
     const hPt = pxToPt(r.height);
@@ -280,12 +271,9 @@
       format: [wPt, hPt]
     });
 
-    // White background (so it's not transparent)
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, wPt, hPt, "F");
 
-    // Render SVG into PDF (vector)
-    // svg2pdf uses the SVG viewBox/width/height. We scale it to fit the wrap content box.
     const svgR = svg.getBoundingClientRect();
     const xPt = pxToPt(svgR.left - r.left);
     const yPt = pxToPt(svgR.top - r.top);
@@ -299,7 +287,6 @@
       height: svgHPt
     });
 
-    // (Text output remains on the page UI; PDF is barcode-only vector as requested)
     const pdfBlob = doc.output("blob");
     downloadBlob(pdfBlob, `UPC-A_${upc12}.pdf`);
   }
@@ -309,10 +296,8 @@
     const wrap = document.getElementById("barcodeWrap");
     const svg = document.getElementById("svgBarcode");
 
-    // Measure current visible size in CSS px
     const r = wrap.getBoundingClientRect();
 
-    // Target pixel size for "600 DPI" based on physical inches implied by CSS pixels (96 dpi baseline)
     const targetW = Math.max(1, Math.round(pxToIn(r.width) * 600));
     const targetH = Math.max(1, Math.round(pxToIn(r.height) * 600));
 
@@ -323,23 +308,15 @@
     const ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
 
-    // White background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, targetW, targetH);
 
-    // We need to render the whole WRAP (with padding) not only svg.
-    // We'll build an SVG wrapper that draws white background + your barcode SVG positioned the same.
-    const pad = getComputedStyle(wrap).paddingTop; // "3mm" -> computed px
-    const padPx = parseFloat(pad); // computed px
-
     const svgR = svg.getBoundingClientRect();
-
     const xPx = svgR.left - r.left;
     const yPx = svgR.top - r.top;
 
     const serializedBarcode = new XMLSerializer().serializeToString(svg);
 
-    // Compose a full SVG scene the size of the WRAP
     const scene =
       `<svg xmlns="http://www.w3.org/2000/svg" width="${r.width}" height="${r.height}" viewBox="0 0 ${r.width} ${r.height}">
         <rect x="0" y="0" width="${r.width}" height="${r.height}" fill="#ffffff"/>
@@ -353,8 +330,6 @@
       ignoreMouse: true
     });
 
-    // Scale rendering to target size
-    // canvg renders in current canvas pixels; we need scale factor
     ctx.save();
     ctx.setTransform(targetW / r.width, 0, 0, targetH / r.height, 0, 0);
     await v.render();
@@ -410,7 +385,6 @@
     }
   });
 
-  // Optional: auto-generate when pressing Enter
   document.getElementById("employeeId").addEventListener("keydown", (e) => {
     if (e.key === "Enter") document.getElementById("btnGenerate").click();
   });
