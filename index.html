@@ -138,20 +138,15 @@
 
 <body>
 <div class="card">
-  <h1>UPC-A Generator</h1>
+  <h1>UPC-A Barcode Generator</h1>
 
   <div class="row">
-    <input id="idInput" class="mono" placeholder="Employee ID (digits only)" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    <input id="idInput" class="mono" placeholder="Employee ID#" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
     <button id="btnGen">Generate</button>
 
     <!-- Buttons swapped: JPG first, then SVG (same id btnPdf kept but label changed) -->
     <button id="btnJpg" class="secondary" disabled>JPG</button>
     <button id="btnPdf" class="secondary" disabled>SVG</button>
-  </div>
-
-  <div class="hint">
-    Enter digits → we build a valid UPC-A: left-pad to 11 digits → GS1 Mod-10 check digit → final 12 digits.
-    Input is digits-only (non-digits are blocked, including paste).
   </div>
 
   <div id="barcodeBox">
@@ -241,7 +236,7 @@
       format: "upc",
       displayValue: false, // bars only
       flat: true,          // all bars same height
-      height: 140,
+      height: 60,
       width: 2,
       margin: 0,
       background: "#ffffff",
