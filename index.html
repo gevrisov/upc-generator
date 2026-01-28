@@ -19,7 +19,7 @@
 
 body{
   margin:0;
-  padding:16px;
+  padding:8px;
   background:#0f1115;
   color:#e9edf5;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -74,7 +74,7 @@ button.secondary{
 button:disabled{ opacity:.5; cursor:not-allowed; }
 
 #barcodeBox{
-  display:inline-block;
+  display:none;
   margin-top:18px;
   padding:var(--pad);
   background:#fff;
@@ -82,6 +82,9 @@ button:disabled{ opacity:.5; cursor:not-allowed; }
   border-radius:8px;
 }
 
+  #barcodeBox.show {
+    display: inline-block;
+  }
 #svgBarcode{ display:block; }
 
 .meta{
@@ -148,7 +151,14 @@ function buildUPC(raw){
 /* ===== Render UPC-A ===== */
 function render(){
   const raw = $("idInput").value.trim();
-  if(!raw) return;
+
+  if(!raw){
+    $("barcodeBox").classList.remove("show");
+    textValue.textContent = "—";
+    btnPdf.disabled = true;
+    btnJpg.disabled = true;
+    return;
+  }
 
   currentUPC = buildUPC(raw);
   textValue.textContent = currentUPC;
@@ -165,6 +175,8 @@ function render(){
     background: "#ffffff",
     lineColor: "#000000"
   });
+
+  $("barcodeBox").classList.add("show);
 
   btnPdf.disabled = false;
   btnJpg.disabled = false;
@@ -222,8 +234,3 @@ function downloadJPG(){
 $("btnRender").onclick = render;
 btnPdf.onclick = downloadPDF;
 btnJpg.onclick = downloadJPG;
-
-render(); // автогенерация
-</script>
-</body>
-</html>
