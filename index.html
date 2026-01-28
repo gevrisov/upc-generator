@@ -7,118 +7,151 @@
 
 <!-- JsBarcode -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<!-- jsPDF -->
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <style>
-:root{
-  --bg:#0f1115;
-  --card:#161a22;
-  --stroke:#262c3a;
-  --input:#0f1320;
-  --text:#e9edf5;
-  --blue:#2b6cff;
-}
+  :root{
+    --bg:#0f1115;
+    --card:#161a22;
+    --stroke:#262c3a;
+    --input:#0f1320;
+    --text:#e9edf5;
+    --muted: rgba(233,237,245,.75);
+    --blue:#2b6cff;
 
-body{
-  margin:0;
-  padding:24px;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-}
+    --pad: 18px;      /* used by barcodeBox */
+    --border: 2px;    /* used by barcodeBox */
+  }
 
-.card{
-  max-width:1100px;
-  margin:auto;
-  background:var(--card);
-  border:1px solid var(--stroke);
-  border-radius:16px;
-  padding:18px;
-}
+  *, *::before, *::after { box-sizing: border-box; }
 
-h1{ margin:0 0 14px; font-size:20px; }
+  body{
+    margin:0;
+    padding:24px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
 
-.row{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  align-items:center;
-}
+  .card{
+    max-width:1100px;
+    margin:auto;
+    background:var(--card);
+    border:1px solid var(--stroke);
+    border-radius:16px;
+    padding:18px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  }
 
-input{
-  flex:1 1 0%;
-  min-width:0px;
-  background:var(--input);
-  border:1px solid #2a3142;
-  color:var(--text);
-  border-radius:12px;
-  padding:12px 14px;
-  font-size:16px;
-  width: auto;
-}
+  h1{ margin:0 0 14px; font-size:20px; letter-spacing:.2px; }
 
-button{
-  padding:12px 14px;
-  border-radius:12px;
-  border:0;
-  background:var(--blue);
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-  flex-shrink: 0;
-}
-button.secondary{
-  background:#252a36;
-  border:1px solid #323a4c;
-}
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
+  .row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
 
-/* barcode */
-#barcodeBox{
-  display:none;
-  margin-top:20px;
-  padding:12px;
-  background:#fff;
-  border:2px solid #000;
-  border-radius:12px;
-  width:100%;
- box-sizing: border-box;
-}
+  /* Make input flexible so buttons fit; keep single line as much as possible */
+  #idInput.mono{
+    flex: 1 1 0%;
+    min-width: 0;
+  }
 
-#svgBarcode{
-  display:block;
-  width:100%;
-  height:auto;
-}
+  input{
+    background:var(--input);
+    border:1px solid #2a3142;
+    color:var(--text);
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:16px;
+    outline:none;
+  }
+  input:focus{ border-color:#4c72ff; }
 
-.meta{
-  margin-top:14px;
-  display:flex;
-  justify-content:space-between;
-  flex-wrap:wrap;
-  font-size:13px;
-  opacity:.85;
-}
+  button{
+    padding:12px 14px;
+    border-radius:12px;
+    border:0;
+    background:var(--blue);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    font-size:14px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  button.secondary{
+    background:#252a36;
+    border:1px solid #323a4c;
+  }
+  button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+  }
 
-.mono{
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-}
+  .hint{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.35;
+  }
+
+  /* barcode */
+  #barcodeBox{
+    display:none; /* hidden until Generate */
+    margin-top:20px;
+    padding:12px;            /* preview padding */
+    background:#fff;
+    border:var(--border) solid #000;
+    border-radius:12px;
+    width:100%;
+  }
+
+  #svgBarcode{
+    display:block;
+    width:100%;
+    height:auto;
+  }
+
+  .meta{
+    margin-top:14px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    font-size:13px;
+    opacity:.85;
+    align-items:center;
+  }
+
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+
+  /* Optional: slightly tighten on very small screens */
+  @media (max-width: 420px){
+    .row{ gap:10px; }
+    button{ padding:10px 12px; font-size:13px; }
+  }
 </style>
 </head>
 
 <body>
 <div class="card">
-  <h1>Badge Barcode Generator</h1>
+  <h1>UPC-A Generator</h1>
 
   <div class="row">
-    <input id="idInput" class="mono" placeholder="Employee ID#">
+    <input id="idInput" class="mono" placeholder="Employee ID (digits only)" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
     <button id="btnGen">Generate</button>
-    <button id="btnPdf" class="secondary" disabled>PDF</button>
+
+    <!-- Buttons swapped: JPG first, then SVG (same id btnPdf kept but label changed) -->
     <button id="btnJpg" class="secondary" disabled>JPG</button>
+    <button id="btnPdf" class="secondary" disabled>SVG</button>
+  </div>
+
+  <div class="hint">
+    Enter digits → we build a valid UPC-A: left-pad to 11 digits → GS1 Mod-10 check digit → final 12 digits.
+    Input is digits-only (non-digits are blocked, including paste).
   </div>
 
   <div id="barcodeBox">
@@ -132,129 +165,214 @@ button:disabled{
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
-const input = $("idInput");
-const svg = $("svgBarcode");
-const box = $("barcodeBox");
-const out = $("textOut");
-const btnPdf = $("btnPdf");
-const btnJpg = $("btnJpg");
+  const idInput = $("idInput");
+  const svgEl = $("svgBarcode");
+  const boxEl = $("barcodeBox");
+  const outEl = $("textOut");
 
-let currentUPC = "";
+  const btnGen = $("btnGen");
+  const btnJpg = $("btnJpg");
+  const btnSvg = $("btnPdf"); // keep existing id as requested, now used for SVG
 
-/* ---------- UPC-A helpers ---------- */
-function digitsOnly(v){ return (v||"").replace(/\D+/g,""); }
+  // ========= Export settings (STANDARD physical size + 3mm white frame) =========
+  // Change only these if you ever want a different standard label size:
+  const EXPORT_DPI = 600;
+  const LABEL_W_MM = 60;
+  const LABEL_H_MM = 25;
+  const WHITE_FRAME_MM = 3;
 
-function checkDigit(first11){
-  let odd=0, even=0;
-  for(let i=0;i<11;i++){
-    const d = first11.charCodeAt(i)-48;
-    (i%2===0)? odd+=d : even+=d;
-  }
-  return (10 - ((odd*3+even)%10)) % 10;
-}
+  const mmToPx = (mm, dpi) => Math.round((mm / 25.4) * dpi);
 
-function buildUPC(raw){
-  const d = digitsOnly(raw);
-  if(!d) return "";
-  if(d.length===12) return d;
-  const base = d.padStart(11,"0").slice(-11);
-  return base + checkDigit(base);
-}
+  let currentUPC = "";
+  let currentSVG = "";
 
-/* ---------- render ---------- */
-function render(){
-  const raw = input.value;
-  const upc = buildUPC(raw);
-
-  if(!upc){
-    box.style.display="none";
-    out.textContent="—";
-    btnPdf.disabled=true;
-    btnJpg.disabled=true;
-    return;
-  }
-
-  currentUPC = upc;
-  out.textContent = currentUPC;
-  box.style.display="block";
-
-  while(svg.firstChild) svg.removeChild(svg.firstChild);
-
-  JsBarcode(svg, currentUPC, {
-    format:"upc",
-    displayValue:false,
-    flat:true,
-    height:60,
-    width:2,
-    margin:0,
-    background:"#fff",
-    lineColor:"#000"
+  // ========= Digits-only input (blocks non-digits including paste) =========
+  idInput.addEventListener("input", () => {
+    const v = idInput.value;
+    const digits = v.replace(/\D/g, "");
+    if (v !== digits) idInput.value = digits;
   });
 
-  /* === MAKE SVG RESPONSIVE === */
-  svg.removeAttribute("width");
-  svg.removeAttribute("height");
-  const bb = svg.getBBox();
-  svg.setAttribute("viewBox", `0 0 ${bb.width} ${bb.height}`);
-  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+  // ========= UPC-A check digit (GS1 Mod-10) =========
+  function upcCheckDigit(first11){
+    let sumOdd = 0, sumEven = 0;
+    for (let i = 0; i < 11; i++){
+      const d = first11.charCodeAt(i) - 48;
+      if ((i % 2) === 0) sumOdd += d; else sumEven += d;
+    }
+    const total = (sumOdd * 3) + sumEven;
+    const mod = total % 10;
+    return String((10 - mod) % 10);
+  }
 
-  btnPdf.disabled=false;
-  btnJpg.disabled=false;
-}
+  function buildUPC(rawDigits){
+    if (!rawDigits) return "";
+    if (rawDigits.length === 12) return rawDigits;
+    const base11 = rawDigits.padStart(11, "0").slice(-11);
+    return base11 + upcCheckDigit(base11);
+  }
 
-/* ---------- PDF ---------- */
-function downloadPDF(){
-  if(!currentUPC) return;
-  const { jsPDF } = window.jspdf;
-  const r = box.getBoundingClientRect();
-  const pdf = new jsPDF({unit:"pt", format:[r.width*0.75,r.height*0.75]});
+  // ========= Render UPC-A =========
+  function render(){
+    const digits = idInput.value.trim(); // already digits-only
+    if (!digits){
+      boxEl.style.display = "none";
+      outEl.textContent = "—";
+      btnJpg.disabled = true;
+      btnSvg.disabled = true;
+      currentUPC = "";
+      currentSVG = "";
+      while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+      return;
+    }
 
-  const xml = new XMLSerializer().serializeToString(box);
-  const img = new Image();
-  img.onload = ()=>{
-    const c=document.createElement("canvas");
-    c.width=img.width; c.height=img.height;
-    const ctx=c.getContext("2d");
-    ctx.fillStyle="#fff";
-    ctx.fillRect(0,0,c.width,c.height);
-    ctx.drawImage(img,0,0);
-    pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,pdf.internal.pageSize.getWidth(),pdf.internal.pageSize.getHeight());
-    pdf.save(`UPC-A_${currentUPC}.pdf`);
-  };
-  img.src=URL.createObjectURL(new Blob([xml],{type:"image/svg+xml"}));
-}
+    currentUPC = buildUPC(digits);
+    outEl.textContent = currentUPC;
 
-/* ---------- JPG 600 DPI ---------- */
-function downloadJPG(){
-  if(!currentUPC) return;
-  const r = box.getBoundingClientRect();
-  const DPI=600;
-  const w=Math.round((r.width/96)*DPI);
-  const h=Math.round((r.height/96)*DPI);
+    // Show preview box BEFORE drawing
+    boxEl.style.display = "block";
 
-  const xml=new XMLSerializer().serializeToString(box);
-  const img=new Image();
-  img.onload=()=>{
-    const c=document.createElement("canvas");
-    c.width=w; c.height=h;
-    const ctx=c.getContext("2d");
-    ctx.fillStyle="#fff";
-    ctx.fillRect(0,0,w,h);
-    ctx.drawImage(img,0,0,w,h);
-    const a=document.createElement("a");
-    a.href=c.toDataURL("image/jpeg",1);
-    a.download=`UPC-A_${currentUPC}_600dpi.jpg`;
+    // Clear and draw
+    while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+
+    JsBarcode(svgEl, currentUPC, {
+      format: "upc",
+      displayValue: false, // bars only
+      flat: true,          // all bars same height
+      height: 140,
+      width: 2,
+      margin: 0,
+      background: "#ffffff",
+      lineColor: "#000000"
+    });
+
+    // Make SVG responsive in preview (does not affect export)
+    svgEl.removeAttribute("width");
+    svgEl.removeAttribute("height");
+    const bb = svgEl.getBBox();
+    svgEl.setAttribute("viewBox", `0 0 ${bb.width} ${bb.height}`);
+    svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    // Save current SVG string for export (from the on-page svg element)
+    currentSVG = new XMLSerializer().serializeToString(svgEl);
+
+    btnJpg.disabled = false;
+    btnSvg.disabled = false;
+  }
+
+  // ========= Build export SVG at standard physical size with >= 3mm white frame =========
+  function buildExportSVG(){
+    if (!currentSVG) return null;
+
+    const W = mmToPx(LABEL_W_MM, EXPORT_DPI);
+    const H = mmToPx(LABEL_H_MM, EXPORT_DPI);
+    const frame = mmToPx(WHITE_FRAME_MM, EXPORT_DPI);
+
+    // Take inner content of the barcode svg (no outer <svg> wrapper)
+    const inner = currentSVG
+      .replace(/^<svg[^>]*>/i, "")
+      .replace(/<\/svg>\s*$/i, "");
+
+    // Use actual bbox of the rendered barcode
+    const bbox = svgEl.getBBox();
+    const bw = Math.max(1, bbox.width);
+    const bh = Math.max(1, bbox.height);
+
+    const innerW = W - frame * 2;
+    const innerH = H - frame * 2;
+
+    // Scale to fit within inner area (no cropping)
+    const scale = Math.min(innerW / bw, innerH / bh);
+
+    // Center it
+    const drawW = bw * scale;
+    const drawH = bh * scale;
+    const x = frame + (innerW - drawW) / 2;
+    const y = frame + (innerH - drawH) / 2;
+
+    const exportSVG =
+`<svg xmlns="http://www.w3.org/2000/svg"
+     width="${LABEL_W_MM}mm" height="${LABEL_H_MM}mm"
+     viewBox="0 0 ${W} ${H}">
+  <rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/>
+  <g transform="translate(${x},${y}) scale(${scale})">
+    ${inner}
+  </g>
+</svg>`;
+
+    return { exportSVG, W, H };
+  }
+
+  // ========= Download SVG (standard size) =========
+  function downloadSVG(){
+    if (!currentUPC) return;
+    const pack = buildExportSVG();
+    if (!pack) return;
+
+    const blob = new Blob([pack.exportSVG], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `UPC-A_${currentUPC}_${LABEL_W_MM}x${LABEL_H_MM}mm.svg`;
+    document.body.appendChild(a);
     a.click();
-  };
-  img.src=URL.createObjectURL(new Blob([xml],{type:"image/svg+xml"}));
-}
+    a.remove();
 
-$("btnGen").onclick=render;
-btnPdf.onclick=downloadPDF;
-btnJpg.onclick=downloadJPG;
-input.addEventListener("keydown",e=>{ if(e.key==="Enter") render(); });
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ========= Download JPG (standard size, white frame >= 3mm) =========
+  function downloadJPG(){
+    if (!currentUPC) return;
+    const pack = buildExportSVG();
+    if (!pack) return;
+
+    const { exportSVG, W, H } = pack;
+
+    const blob = new Blob([exportSVG], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = W;
+      c.height = H;
+      const ctx = c.getContext("2d");
+
+      // White background guaranteed
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(img, 0, 0, W, H);
+
+      const a = document.createElement("a");
+      a.href = c.toDataURL("image/jpeg", 1.0);
+      a.download = `UPC-A_${currentUPC}_${LABEL_W_MM}x${LABEL_H_MM}mm_${EXPORT_DPI}dpi.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert("JPG export failed. Generate the barcode again.");
+    };
+    img.src = url;
+  }
+
+  // ========= Wiring =========
+  btnGen.onclick = render;
+  btnJpg.onclick = downloadJPG;
+  btnSvg.onclick = downloadSVG;
+
+  idInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") render();
+  });
+
+  // No auto-render on load.
 </script>
 </body>
 </html>
