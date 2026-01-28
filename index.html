@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UPC-A Generator</title>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      max-width: 820px;
+      margin: 24px auto;
+      padding: 0 16px;
+      background: #f8f9fa;
+    }
+    h1 { margin-bottom: 4px; }
+    small { color:#555; }
+
+    .box {
+      background:#fff;
+      padding:16px;
+      border-radius:10px;
+      box-shadow:0 2px 10px rgba(0,0,0,.08);
+      margin-top:16px;
+    }
+
+    .row {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    input {
+      font-size:16px;
+      padding:10px 12px;
+      width:260px;
+    }
+
+    button {
+      font-size:16px;
+      padding:10px 14px;
+      cursor:pointer;
+    }
+
+    #result {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size:18px;
+      margin-top:8px;
+    }
+
+    svg {
+      margin-top:12px;
+      background:#fff;
+      border:1px solid #ddd;
+      max-width:100%;
+      height:auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>UPC-A Generator</h1>
+<small>
+Enter an ID (≤11 digits).  
+The system will pad zeros, calculate GS1 Mod-10 check digit, and generate a valid UPC-A.
+</small>
+
+<div class="box">
+  <div class="row">
+    <input id="input" inputmode="numeric" placeholder="Employee ID (digits)">
+    <button onclick="generate()">Generate</button>
+  </div>
+
+  <div id="result"></div>
+
+  <div id="barcode"></div>
+
+  <div class="row">
+    <button id="btnSvg" onclick="downloadSVG()" disabled>Download SVG</button>
+    <button id="btnPdf" onclick="downloadPDF()" disabled>Download PDF</button>
+  </div>
+</div>
+
+<!-- Barcode library -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<!-- PDF library -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<script>
+let currentUPC = "";
+let currentSVG = null;
+
+function upcCheckDigit(data11) {
+  let sumOdd = 0;
+  let sumEven = 0;
+
+  for (let i = 0; i < data11.length; i++) {
+    const d = parseInt(data11[i], 10);
+    if ((i + 1) % 2 === 1) sumOdd += d;
+    else sumEven += d;
+  }
+
+  const total = sumOdd * 3 + sumEven;
+  return (10 - (total % 10)) % 10;
+}
+
+function computeUPCA(raw) {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) throw "Empty input";
+
+  if (digits.length === 12) {
+    const cd = upcCheckDigit(digits.slice(0,11));
+    if (cd !== parseInt(digits[11],10)) throw "Invalid check digit";
+    return digits;
+  }
+
+  if (digits.length > 11) throw "Too many digits";
+
+  const data11 = digits.padStart(11,"0");
+  return data11 + upcCheckDigit(data11);
+}
+
+function generate() {
+  try {
+    currentUPC = computeUPCA(document.getElementById("input").value);
+    document.getElementById("result").textContent = "UPC-A: " + currentUPC;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("id","svgBarcode");
+    document.getElementById("barcode").innerHTML = "";
+    document.getElementById("barcode").appendChild(svg);
+
+    JsBarcode(svg, currentUPC, {
+      format:"upc",
+      displayValue:true,
+      font:"monospace",
+      fontSize:18,
+      margin:10
+    });
+
+    currentSVG = svg;
+    document.getElementById("btnSvg").disabled = false;
+    document.getElementById("btnPdf").disabled = false;
+
+  } catch (e) {
+    alert(e);
+  }
+}
+
+function downloadSVG() {
+  const xml = new XMLSerializer().serializeToString(currentSVG);
+  const blob = new Blob([xml], {type:"image/svg+xml"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "UPC_A_" + currentUPC + ".svg";
+  a.click();
+}
+
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+
+  const xml = new XMLSerializer().serializeToString(currentSVG);
+  const img = new Image();
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+  await img.decode();
+
+  const pdf = new jsPDF({unit:"pt", format:"a4"});
+  pdf.setFont("courier","normal");
+  pdf.text("UPC-A: " + currentUPC, 48, 60);
+  pdf.addImage(img,"PNG",48,80,500,200);
+  pdf.save("UPC_A_" + currentUPC + ".pdf");
+}
+</script>
+
+</body>
+</html>
