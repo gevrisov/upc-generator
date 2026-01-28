@@ -1,0 +1,127 @@
+:root{
+  --bg:#0f1115;
+  --card:#161a22;
+  --stroke:#262c3a;
+  --input:#0f1320;
+  --text:#e9edf5;
+  --muted: rgba(233,237,245,.75);
+  --blue:#2b6cff;
+
+  --radius: 20px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body{
+  margin:0;
+  padding:24px;
+  background:var(--bg);
+  color:var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.card{
+  max-width: 920px;
+  margin: 0 auto;
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.header{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+h1{
+  margin:0;
+  font-size: 24px;
+  letter-spacing:.2px;
+}
+
+.sub{
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.controls{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+input{
+  flex:1;
+  min-width: 220px;
+  padding:12px 14px;
+  border-radius: 14px;
+  border:1px solid var(--stroke);
+  background: var(--input);
+  color: var(--text);
+  outline: none;
+  font-size: 15px;
+}
+
+input:focus{
+  border-color: rgba(43,108,255,.7);
+  box-shadow: 0 0 0 3px rgba(43,108,255,.15);
+}
+
+button{
+  padding:12px 16px;
+  border-radius: 14px;
+  border:1px solid transparent;
+  cursor:pointer;
+  font-weight: 600;
+  background: var(--blue);
+  color: white;
+  font-size: 14px;
+}
+
+button.secondary{
+  background: transparent;
+  border:1px solid var(--stroke);
+  color: var(--text);
+}
+
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.barcodeBox{
+  display:none;
+  margin-top:20px;
+  padding:14px;
+  background:#fff;
+  border:2px solid #000;
+  border-radius:14px;
+  width:100%;
+}
+
+#svgBarcode{
+  width: 100%;
+  height: auto;
+  display:block;
+}
+
+.meta{
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (max-width: 420px){
+  button{ padding:10px 12px; font-size:13px; }
+}
