@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>UPC-A Generator</title>
+  <title>UPC-A Barcode Generator</title>
 
   <!-- JsBarcode -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -15,7 +15,6 @@
   <main class="card">
     <header class="header">
       <h1>UPC-A Barcode Generator</h1>
-      <div class="sub">Developed by <strong>Gary Evrisov</strong></div>
     </header>
 
     <section class="controls">
@@ -30,13 +29,13 @@
       />
       <button id="btnGen" type="button">Generate</button>
 
-      <button id="btnDownload" type="button" class="secondary" disabled aria-disabled="true">
-        ⬇ Download label
+      <button id="btnDownload" type="button" class="secondary" disabled aria-disabled="true">Download ⤓
       </button>
     </section>
 
     <section id="barcodeBox" class="barcodeBox" aria-live="polite">
       <svg id="svgBarcode" role="img" aria-label="UPC-A barcode"></svg>
+      <div class="sub">Developed by <strong>Gary Evrisov</strong></div>
     </section>
 
     <section class="meta">
