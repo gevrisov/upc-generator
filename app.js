@@ -210,11 +210,19 @@
   }
 
   function init() {
-    resetUI();
-    dom.idInput.addEventListener("input", render);
-    dom.btnGen.addEventListener("click", render);
-    dom.btnDownload.addEventListener("click", downloadLabelJpg);
-  }
+  resetUI();
 
+  dom.idInput.addEventListener("input", () => {
+    dom.idInput.value = digitsOnly(dom.idInput.value);
+    // не генерируем автоматически
+  });
+
+  dom.idInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") render();
+  });
+
+  dom.btnGen.addEventListener("click", render);
+  dom.btnDownload.addEventListener("click", downloadLabelJpg);
+}
   init();
 })();
