@@ -211,20 +211,17 @@ body{
   margin:0;
 }
 .infoBtn{
-  width:34px;
-  height:34px;
-  border-radius:10px;
-  border:1px solid var(--stroke);
+  border: none;
   background: transparent;
-  color: var(--text);
-  font-size:18px;
-  line-height:1;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  color: var(--muted);   /* тот же цвет, что и вторичный текст */
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
 }
+
 .infoBtn:hover{
-  background: rgba(255,255,255,.06);
+  color: var(--text);
 }
 
 /* Modal (Info) */
