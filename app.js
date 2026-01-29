@@ -243,3 +243,32 @@
 
   init();
 })();
+
+// --- Live US time (YYYY-MM-DD HH:MM:SS AM/PM) ---
+function updateUSTime() {
+  const now = new Date();
+
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+
+  const parts = fmt.formatToParts(now);
+  const v = (t) => parts.find(p => p.type === t)?.value;
+
+  const text =
+    `${v("year")}-${v("month")}-${v("day")} ` +
+    `${v("hour")}:${v("minute")}:${v("second")} ${v("dayPeriod")}`;
+
+  const el = document.getElementById("usTime");
+  if (el) el.textContent = text;
+}
+
+updateUSTime();
+setInterval(updateUSTime, 1000);
