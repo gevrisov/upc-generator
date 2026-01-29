@@ -20,6 +20,8 @@ body{
 }
 
 .card{
+  position: relative;
+  z-index: 2;
   max-width:900px;
   margin:0 auto;
   background:var(--card);
