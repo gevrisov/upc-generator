@@ -15,9 +15,9 @@
   <main class="card">
     <header class="header">
       <h1 class="titleRow">
-  Badge Barcode Generator
-  <button id="infoBtn" class="infoBtn" type="button" aria-label="Info" title="Info">ℹ︎</button>
-</h1>
+        <span>Badge Barcode Generator</span>
+        <button id="infoBtn" class="infoBtn" type="button" aria-label="Info" title="Info">ℹ︎</button>
+      </h1>
     </header>
 
     <section class="controls">
@@ -46,13 +46,47 @@
         UPC-A: <span id="textOut">—</span>
       </div>
       <div class="sub">
-  <span id="usTime">—</span>
-</div>
+        <span id="usTime">—</span>
+      </div>
     </section>
   </main>
+
+  <!-- INFO MODAL (inserted between main and footer) -->
+  <div id="infoModal" class="modal" aria-hidden="true">
+    <div class="modalBackdrop" data-close="1"></div>
+
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+      <div class="modalHeader">
+        <div id="infoTitle" class="modalTitle">Info</div>
+        <button id="infoClose" class="modalClose" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <h3>How it works</h3>
+        <p>
+          Enter your Employee ID and press <b>Generate</b> (or hit <b>Enter</b>).<br/>
+          A valid <b>UPC-A</b> is created by padding the ID to 11 digits and calculating the
+          <b>check digit</b> (the last digit) using the GS1 standard.
+        </p>
+
+        <h3>Download</h3>
+        <p>
+          The badge is downloaded as a <b>JPG image</b> (3000 × 3000).<br/>
+          The file is saved to your device’s <b>Downloads</b> folder.
+        </p>
+
+        <h3>Privacy</h3>
+        <p>
+          No data is stored, uploaded, or shared.<br/>
+          Everything runs <b>locally in your browser</b>.
+        </p>
+      </div>
+    </div>
+  </div>
+
   <footer class="page-footer">
-  <div class="footer-line main">need a badge? we got you!</div>
-  <div class="footer-line sub">needbadge.com</div>
+    <div class="footer-line main">need a badge? we got you!</div>
+    <div class="footer-line sub">needbadge.com</div>
   </footer>
 </body>
 </html>
