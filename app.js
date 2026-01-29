@@ -17,7 +17,7 @@
   };
 
   const config = {
-    // On-page preview (not the exported square)
+    // On-page preview barcode (does NOT affect exported image)
     previewBarcode: {
       format: "upc",
       displayValue: false,
@@ -29,33 +29,29 @@
       lineColor: "#000000",
     },
 
-    // Exported square JPG
+    // Export square JPG
     export: {
       sizePx: 3000,
-      title: "MY EMPLOYEE ID CARD",
 
-      // layout
-      padding: 180,
-      titleTopY: 240,
-      titleFont: "700 120px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      idFont: "600 120px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      // TEXT (2 lines, above barcode)
+      titleText: "Digital Employee ID Card",
+      titleFontPx: 120,
+      idFontPx: 72,
+      lineGapPx: 26,
 
-      // barcode target box (we will scale barcode into this box)
-      barcodeMaxWidth: 2400,
-      barcodeMaxHeight: 900,
-
-      // spacing
-      gapTitleToBarcode: 140,
-      gapBarcodeToId: 140,
+      // QUIET ZONES (safe margins for scanning)
+      // With maxBW=2400 in a 3000px canvas => 300px each side minimum.
+      barcodeMaxWidthPx: 2400,
+      barcodeMaxHeightPx: 1050,
     },
 
-    // Barcode generation for export (we'll still scale into box)
+    // Barcode used for export SVG (we then scale into barcodeMaxWidth/Height)
     exportBarcode: {
       format: "upc",
       displayValue: false,
       flat: true,
-      height: 160, // intrinsic height inside the SVG before scaling
-      width: 3,    // intrinsic module width
+      height: 180, // intrinsic height (scaled later)
+      width: 4,    // module width (thicker bars)
       margin: 0,
       background: "#ffffff",
       lineColor: "#000000",
@@ -90,7 +86,6 @@
   function buildUpcAFromRaw(rawDigits) {
     const d = digitsOnly(rawDigits);
     if (!d) return "";
-
     if (d.length === 12) return d;
 
     const base11 = d.padStart(11, "0").slice(-11);
@@ -130,18 +125,7 @@
     setReady(false);
   }
 
-  // ---------- export (square JPG 3000x3000) ----------
-  function makeBarcodeSvgDataUrl(upc12) {
-    // Offscreen SVG for export
-    const tmp = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    JsBarcode(tmp, upc12, config.exportBarcode);
-
-    const serialized = new XMLSerializer().serializeToString(tmp);
-
-    const blob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
-    return URL.createObjectURL(blob);
-  }
-
+  // ---------- export helpers ----------
   function fitRect(srcW, srcH, maxW, maxH) {
     const scale = Math.min(maxW / srcW, maxH / srcH);
     return {
@@ -151,61 +135,94 @@
     };
   }
 
-  function drawCenteredText(ctx, text, xCenter, y, font, color = "#000") {
+  function makeBarcodeSvgUrl(upc12) {
+    const tmp = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    JsBarcode(tmp, upc12, config.exportBarcode);
+
+    const serialized = new XMLSerializer().serializeToString(tmp);
+    const blob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+    return URL.createObjectURL(blob);
+  }
+
+  function drawCenteredTextTop(ctx, text, yTop, font, color = "#000") {
     ctx.font = font;
     ctx.fillStyle = color;
     ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(text, xCenter, y);
+    ctx.textBaseline = "top";
+    ctx.fillText(text, ctx.canvas.width / 2, yTop);
   }
 
+  // ---------- export main ----------
   function downloadLabelJpg() {
     if (!state.upc12 || !state.rawId) return;
 
     const S = config.export.sizePx;
-    const c = document.createElement("canvas");
-    c.width = S;
-    c.height = S;
-    const ctx = c.getContext("2d");
 
-    // background
+    // Create canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = S;
+    canvas.height = S;
+    const ctx = canvas.getContext("2d");
+
+    // Background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, S, S);
 
-    const centerX = S / 2;
-
-    // Title (top)
-    drawCenteredText(ctx, config.export.title, centerX, config.export.titleTopY, config.export.titleFont, "#000000");
-
-    // Barcode image (centered block)
-    const barcodeUrl = makeBarcodeSvgDataUrl(state.upc12);
+    // Barcode SVG URL -> Image
+    const barcodeUrl = makeBarcodeSvgUrl(state.upc12);
     const img = new Image();
 
     img.onload = () => {
       try {
-        // Measure intrinsic SVG size from image
-        const srcW = img.width || 1;
-        const srcH = img.height || 1;
+        // Source image intrinsic size (may be 0 in some engines; fallback)
+        const srcW = img.width || 2000;
+        const srcH = img.height || 600;
 
-        const fitted = fitRect(srcW, srcH, config.export.barcodeMaxWidth, config.export.barcodeMaxHeight);
+        // Fit barcode into SAFE box (quiet zones preserved)
+        const fitted = fitRect(
+          srcW,
+          srcH,
+          config.export.barcodeMaxWidthPx,
+          config.export.barcodeMaxHeightPx
+        );
 
-        // Layout: we want barcode centered overall (visually centered in square),
-        // but also respecting the title above.
-        // We'll place barcode so that the combined block (barcode + rawId text) is centered around mid.
-        const idTextY = (S / 2) + (fitted.h / 2) + config.export.gapBarcodeToId + 120; // baseline
-        const barcodeY = idTextY - config.export.gapBarcodeToId - fitted.h;
+        const bw = fitted.w;
+        const bh = fitted.h;
 
-        const drawX = Math.round(centerX - fitted.w / 2);
-        const drawY = Math.round(barcodeY);
+        // 1) BARCODE STRICTLY CENTERED IN THE WHOLE SQUARE
+        const bx = Math.round((S - bw) / 2);
+        const by = Math.round((S - bh) / 2);
+        ctx.drawImage(img, bx, by, bw, bh);
 
-        ctx.drawImage(img, drawX, drawY, fitted.w, fitted.h);
+        // 2) TEXT BLOCK: centered between TOP EDGE and BARCODE TOP
+        const topSpace = by; // pixels from top edge to barcode top
 
-        // Raw ID under barcode (ONLY user input)
-        drawCenteredText(ctx, state.rawId, centerX, idTextY, config.export.idFont, "#000000");
+        const titlePx = config.export.titleFontPx;
+        const idPx = config.export.idFontPx;
+        const gap = config.export.lineGapPx;
+
+        const blockH = titlePx + gap + idPx;
+        const blockTop = Math.round((topSpace - blockH) / 2);
+
+        // Title line
+        drawCenteredTextTop(
+          ctx,
+          config.export.titleText,
+          blockTop,
+          `700 ${titlePx}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`
+        );
+
+        // Employee ID (exactly what user entered)
+        drawCenteredTextTop(
+          ctx,
+          state.rawId,
+          blockTop + titlePx + gap,
+          `600 ${idPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
+        );
 
         // Export JPG
         const a = document.createElement("a");
-        a.href = c.toDataURL("image/jpeg", 1.0);
+        a.href = canvas.toDataURL("image/jpeg", 1.0);
         a.download = `EMPLOYEE_ID_${state.rawId}.jpg`;
         document.body.appendChild(a);
         a.click();
@@ -238,7 +255,6 @@
 
     dom.out.textContent = state.upc12;
     renderPreviewBarcode(state.upc12);
-
     setReady(true);
   }
 
