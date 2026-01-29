@@ -5,16 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>UPC-A Barcode Generator</title>
 
+  <!-- QR library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
   <!-- JsBarcode -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
-  <!-- QR code -->
-  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
-
   <link rel="stylesheet" href="style.css" />
-  <script defer src="app.js?v=3"></script>
+  <script defer src="app.js?v=4"></script>
 </head>
-
 <body>
   <main class="card">
     <header class="header">
@@ -32,10 +31,7 @@
         aria-label="Employee ID"
       />
       <button id="btnGen" type="button">Generate</button>
-
-      <button id="btnDownload" type="button" class="download" disabled aria-disabled="true">
-        Download
-      </button>
+      <button id="btnDownload" type="button" class="download" disabled aria-disabled="true">Download</button>
     </section>
 
     <section id="barcodeBox" class="barcodeBox" aria-live="polite">
@@ -43,20 +39,18 @@
     </section>
 
     <section class="meta">
-      <div class="mono">
-        UPC-A: <span id="textOut">—</span>
-      </div>
-      <div class="sub">
-        Developed by <strong>Evrisov</strong>
-      </div>
+      <div class="mono">UPC-A: <span id="textOut">—</span></div>
+      <div class="sub">Developed by <strong>Evrisov</strong></div>
     </section>
   </main>
 
-  <!-- Fixed QR launcher + bottom sheet (independent from main UI) -->
-  <button id="qrFab" class="qrFab" type="button" aria-label="Share link QR">QR</button>
+  <!-- Share QR (separate from main UI) -->
+  <button id="qrFab" class="qrFab" type="button" aria-label="Share QR to open the page">
+    Share QR to open the page
+  </button>
 
   <div id="qrSheet" class="qrSheet" aria-hidden="true">
-    <div class="qrSheetInner">
+    <div class="qrSheetInner" role="dialog" aria-modal="true" aria-label="Open link">
       <div class="qrSheetHeader">
         <div class="qrSheetTitle">Open link</div>
         <button id="qrClose" class="qrClose" type="button" aria-label="Close">✕</button>
