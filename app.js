@@ -1,11 +1,7 @@
 (() => {
   "use strict";
 
-  const $ = (id) => {
-    const el = document.getElementById(id);
-    if (!el) throw new Error(`Missing element: #${id}`);
-    return el;
-  };
+  const $ = (id) => document.getElementById(id);
 
   const dom = {
     idInput: $("idInput"),
@@ -17,7 +13,6 @@
   };
 
   const config = {
-    // On-page preview barcode (does NOT affect exported image)
     previewBarcode: {
       format: "upc",
       displayValue: false,
@@ -29,30 +24,24 @@
       lineColor: "#000000",
     },
 
-    // Export square JPG
     export: {
       sizePx: 3000,
 
-      // TOP TEXT (title)
       titleText: "Digital Employee ID Card",
       titleFontPx: 120,
-
-      // BOTTOM TEXT (employee ID)
       idFontPx: 72,
 
-      // QUIET ZONES (safe margins for scanning)
-      // With maxWidth=2400 in a 3000px canvas => 300px each side minimum.
+      // quiet zones
       barcodeMaxWidthPx: 2400,
       barcodeMaxHeightPx: 1050,
     },
 
-    // Barcode used for export SVG (we then scale into barcodeMaxWidth/Height)
     exportBarcode: {
       format: "upc",
       displayValue: false,
       flat: true,
-      height: 180, // intrinsic height (scaled later)
-      width: 4,    // module width (thicker bars)
+      height: 180,
+      width: 4,
       margin: 0,
       background: "#ffffff",
       lineColor: "#000000",
@@ -65,51 +54,43 @@
   };
 
   // ---------- utils ----------
-  function digitsOnly(value) {
-    return String(value ?? "").replace(/\D/g, "");
+  function digitsOnly(v) {
+    return String(v ?? "").replace(/\D/g, "");
   }
 
   function upcACheckDigit(first11) {
-    let sumOdd = 0;
-    let sumEven = 0;
-
-    for (let i = 0; i < 11; i += 1) {
+    let odd = 0, even = 0;
+    for (let i = 0; i < 11; i++) {
       const d = first11.charCodeAt(i) - 48;
-      if (i % 2 === 0) sumOdd += d;
-      else sumEven += d;
+      i % 2 === 0 ? (odd += d) : (even += d);
     }
-
-    const total = sumOdd * 3 + sumEven;
-    const mod = total % 10;
-    return String((10 - mod) % 10);
+    return String((10 - ((odd * 3 + even) % 10)) % 10);
   }
 
-  function buildUpcAFromRaw(rawDigits) {
-    const d = digitsOnly(rawDigits);
+  function buildUpcA(raw) {
+    const d = digitsOnly(raw);
     if (!d) return "";
     if (d.length === 12) return d;
-
-    const base11 = d.padStart(11, "0").slice(-11);
-    return base11 + upcACheckDigit(base11);
+    const base = d.padStart(11, "0").slice(-11);
+    return base + upcACheckDigit(base);
   }
 
-  function clearSvg(svgEl) {
-    while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+  function clearSvg(svg) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
 
-  function setReady(ready) {
-    dom.btnDownload.disabled = !ready;
-    dom.btnDownload.setAttribute("aria-disabled", String(!ready));
+  function setReady(ok) {
+    dom.btnDownload.disabled = !ok;
+    dom.btnDownload.setAttribute("aria-disabled", String(!ok));
   }
 
   // ---------- preview ----------
-  function renderPreviewBarcode(upc12) {
+  function renderPreview(upc) {
     dom.box.style.display = "block";
     clearSvg(dom.svg);
 
-    JsBarcode(dom.svg, upc12, config.previewBarcode);
+    JsBarcode(dom.svg, upc, config.previewBarcode);
 
-    // make responsive
     dom.svg.removeAttribute("width");
     dom.svg.removeAttribute("height");
     const bb = dom.svg.getBBox();
@@ -126,125 +107,94 @@
     setReady(false);
   }
 
-  // ---------- export helpers ----------
-  function fitRect(srcW, srcH, maxW, maxH) {
-    const scale = Math.min(maxW / srcW, maxH / srcH);
-    return {
-      w: Math.round(srcW * scale),
-      h: Math.round(srcH * scale),
-      scale,
-    };
-  }
-
-  function makeBarcodeSvgUrl(upc12) {
-    const tmp = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    JsBarcode(tmp, upc12, config.exportBarcode);
-
-    const serialized = new XMLSerializer().serializeToString(tmp);
-    const blob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+  // ---------- export ----------
+  function makeBarcodeSvgUrl(upc) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    JsBarcode(svg, upc, config.exportBarcode);
+    const data = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([data], { type: "image/svg+xml" });
     return URL.createObjectURL(blob);
   }
 
-  function drawCenteredTextTop(ctx, text, yTop, font, color = "#000") {
+  function drawText(ctx, text, y, font) {
     ctx.font = font;
-    ctx.fillStyle = color;
+    ctx.fillStyle = "#000";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText(text, ctx.canvas.width / 2, yTop);
+    ctx.fillText(text, ctx.canvas.width / 2, y);
   }
 
-  // ---------- export main ----------
   function downloadLabelJpg() {
     if (!state.upc12 || !state.rawId) return;
 
     const S = config.export.sizePx;
-
-    // Create canvas
     const canvas = document.createElement("canvas");
-    canvas.width = S;
-    canvas.height = S;
+    canvas.width = canvas.height = S;
     const ctx = canvas.getContext("2d");
 
-    // Background
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, S, S);
 
-    // Barcode SVG URL -> Image
-    const barcodeUrl = makeBarcodeSvgUrl(state.upc12);
+    const url = makeBarcodeSvgUrl(state.upc12);
     const img = new Image();
 
     img.onload = () => {
       try {
-        // Source image intrinsic size (may be 0 in some engines; fallback)
-        const srcW = img.width || 2000;
-        const srcH = img.height || 600;
+        const sw = img.width || 2000;
+        const sh = img.height || 600;
 
-        // Fit barcode into SAFE box (quiet zones preserved)
-        const fitted = fitRect(
-          srcW,
-          srcH,
-          config.export.barcodeMaxWidthPx,
-          config.export.barcodeMaxHeightPx
+        const scale = Math.min(
+          config.export.barcodeMaxWidthPx / sw,
+          config.export.barcodeMaxHeightPx / sh
         );
 
-        const bw = fitted.w;
-        const bh = fitted.h;
+        const bw = Math.round(sw * scale);
+        const bh = Math.round(sh * scale);
 
-        // 1) BARCODE STRICTLY CENTERED IN THE WHOLE SQUARE
+        // BARCODE — строго по центру
         const bx = Math.round((S - bw) / 2);
         const by = Math.round((S - bh) / 2);
         ctx.drawImage(img, bx, by, bw, bh);
 
-        // 2) TITLE: centered between TOP EDGE and BARCODE TOP
-        const titlePx = config.export.titleFontPx;
-        const idPx = config.export.idFontPx;
-
-        const topSpace = by;
-        const titleTop = Math.round((topSpace - titlePx) / 2);
-
-        drawCenteredTextTop(
+        // TITLE — центр между верхом и баркодом
+        const titleY = Math.round((by - config.export.titleFontPx) / 2);
+        drawText(
           ctx,
           config.export.titleText,
-          titleTop,
-          `700 ${titlePx}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`
+          titleY,
+          `700 ${config.export.titleFontPx}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`
         );
 
-        // 3) EMPLOYEE ID: centered between BARCODE BOTTOM and BOTTOM EDGE
-        const bottomSpaceStart = by + bh;
-        const bottomSpaceHeight = S - bottomSpaceStart;
-        const idTop = Math.round(bottomSpaceStart + (bottomSpaceHeight - idPx) / 2);
+        // EMPLOYEE ID — центр между низом баркода и краем
+        const bottomStart = by + bh;
+        const bottomHeight = S - bottomStart;
+        const idY = Math.round(
+          bottomStart + (bottomHeight - config.export.idFontPx) / 2
+        );
 
-        drawCenteredTextTop(
+        drawText(
           ctx,
           state.rawId,
-          idTop,
-          `600 ${idPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
+          idY,
+          `600 ${config.export.idFontPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
         );
 
-        // Export JPG
         const a = document.createElement("a");
         a.href = canvas.toDataURL("image/jpeg", 1.0);
         a.download = `EMPLOYEE_ID_${state.rawId}.jpg`;
-        document.body.appendChild(a);
         a.click();
-        a.remove();
       } finally {
-        URL.revokeObjectURL(barcodeUrl);
+        URL.revokeObjectURL(url);
       }
     };
 
-    img.onerror = () => {
-      URL.revokeObjectURL(barcodeUrl);
-      console.error("Failed to render barcode image for export.");
-    };
-
-    img.src = barcodeUrl;
+    img.src = url;
   }
 
   // ---------- main ----------
   function render() {
-    const raw = digitsOnly(dom.idInput.value).trim();
-    if (dom.idInput.value !== raw) dom.idInput.value = raw;
+    const raw = digitsOnly(dom.idInput.value);
+    dom.idInput.value = raw;
 
     if (!raw) {
       resetUI();
@@ -252,25 +202,16 @@
     }
 
     state.rawId = raw;
-    state.upc12 = buildUpcAFromRaw(raw);
+    state.upc12 = buildUpcA(raw);
 
     dom.out.textContent = state.upc12;
-    renderPreviewBarcode(state.upc12);
+    renderPreview(state.upc12);
     setReady(true);
   }
 
   function init() {
     resetUI();
-
-    dom.idInput.addEventListener("input", () => {
-      const d = digitsOnly(dom.idInput.value);
-      if (dom.idInput.value !== d) dom.idInput.value = d;
-    });
-
-    dom.idInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") render();
-    });
-
+    dom.idInput.addEventListener("input", render);
     dom.btnGen.addEventListener("click", render);
     dom.btnDownload.addEventListener("click", downloadLabelJpg);
   }
