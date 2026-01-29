@@ -272,3 +272,36 @@ function updateUSTime() {
 
 updateUSTime();
 setInterval(updateUSTime, 1000);
+
+
+// =======================
+// Info modal (only UI)
+// =======================
+(() => {
+  const infoBtn = document.getElementById("infoBtn");
+  const infoModal = document.getElementById("infoModal");
+  const infoClose = document.getElementById("infoClose");
+
+  if (!infoBtn || !infoModal || !infoClose) return;
+
+  const open = () => {
+    infoModal.classList.add("isOpen");
+    infoModal.setAttribute("aria-hidden", "false");
+  };
+
+  const close = () => {
+    infoModal.classList.remove("isOpen");
+    infoModal.setAttribute("aria-hidden", "true");
+  };
+
+  infoBtn.addEventListener("click", open);
+  infoClose.addEventListener("click", close);
+
+  infoModal.addEventListener("click", (e) => {
+    if (e.target && e.target.getAttribute("data-close") === "1") close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && infoModal.classList.contains("isOpen")) close();
+  });
+})();
