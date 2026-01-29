@@ -401,13 +401,17 @@ body{
 }
 
 .logo-center{
+  position: fixed;
+  inset: 0;
   display: flex;
-  justify-content: center;
-  margin: 24px 0 16px;
+  align-items: center;     /* вертикально по центру */
+  justify-content: center; /* горизонтально по центру */
+  pointer-events: none;
+  z-index: 1;
 }
 
 .logo-center img{
-  max-width: 260px;
-  width: 100%;
+  width: min(360px, 70vw);
   height: auto;
+  opacity: 0.08; /* мягко, как watermark */
 }
