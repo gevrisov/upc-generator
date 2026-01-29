@@ -315,8 +315,8 @@ body{
   top: 50%;
   transform: translate(-50%, -50%);
 
-  width: min(520px, calc(100% - 28px));
-
+  width: min(900px, calc(100% - 48px));
+  
   /* iOS glass effect */
   background: rgba(255,255,255,0.12);
   backdrop-filter: blur(22px) saturate(160%);
