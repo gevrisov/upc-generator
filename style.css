@@ -129,3 +129,11 @@ button.download:hover:not(:disabled){
   button{ padding:10px 12px; font-size:13px; }
   input{ padding:10px 12px; }
 }
+
+.below-card-hint{
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  opacity: 0.9;
+}
