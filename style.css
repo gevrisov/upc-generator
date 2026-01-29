@@ -399,3 +399,15 @@ body{
 .modal__ok:hover{
   background: rgba(102,217,255,.16);
 }
+
+.logo-center{
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 16px;
+}
+
+.logo-center img{
+  max-width: 260px;
+  width: 100%;
+  height: auto;
+}
