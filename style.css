@@ -415,5 +415,5 @@ body{
 .logo-center img{
   width: min(360px, 70vw);
   height: auto;
-  opacity: 0.30;
+  opacity: 1;
 }
