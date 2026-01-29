@@ -241,7 +241,7 @@
   init();
 })();
 
-// ===== Fixed QR bottom sheet (independent UI) =====
+// ===== Fixed QR with center logo =====
 const FIXED_QR_URL = "https://needbadge.com/";
 
 const qrFab = document.getElementById("qrFab");
@@ -249,23 +249,47 @@ const qrSheet = document.getElementById("qrSheet");
 const qrClose = document.getElementById("qrClose");
 const qrCodeEl = document.getElementById("qrCode");
 
-let qrMade = false;
+let qrInstance = null;
 
 function openQr() {
   qrSheet.classList.add("show");
   qrSheet.setAttribute("aria-hidden", "false");
 
-  if (!qrMade) {
+  if (!qrInstance) {
     qrCodeEl.innerHTML = "";
-    new QRCode(qrCodeEl, {
-      text: FIXED_QR_URL,
-      width: 260,
-      height: 260,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H,
+
+    qrInstance = new QRCodeStyling({
+      width: 280,
+      height: 280,
+      data: FIXED_QR_URL,
+      image: "logo.png",
+      margin: 16,
+
+      dotsOptions: {
+        color: "#000000",
+        type: "square"
+      },
+
+      cornersSquareOptions: {
+        type: "extra-rounded"
+      },
+
+      cornersDotOptions: {
+        type: "dot"
+      },
+
+      backgroundOptions: {
+        color: "#ffffff"
+      },
+
+      imageOptions: {
+        crossOrigin: "anonymous",
+        margin: 6,
+        imageSize: 0.28   // размер логотипа (28% от QR)
+      }
     });
-    qrMade = true;
+
+    qrInstance.append(qrCodeEl);
   }
 }
 
@@ -277,7 +301,6 @@ function closeQr() {
 qrFab.addEventListener("click", openQr);
 qrClose.addEventListener("click", closeQr);
 
-// close when tapping outside the card
 qrSheet.addEventListener("click", (e) => {
   if (e.target === qrSheet) closeQr();
 });
