@@ -201,3 +201,87 @@ button.download:hover:not(:disabled){
 body{
   padding-bottom: 90px;
 }
+
+/* Title row + info button */
+.titleRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0;
+}
+.infoBtn{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background: transparent;
+  color: var(--text);
+  font-size:18px;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.infoBtn:hover{
+  background: rgba(255,255,255,.06);
+}
+
+/* Modal (Info) */
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  z-index:999;
+}
+.modal.isOpen{
+  display:block;
+}
+.modalBackdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.55);
+}
+.modalCard{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%);
+  width:min(560px, calc(100vw - 32px));
+  background: var(--card);
+  border:1px solid var(--stroke);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  padding:16px;
+}
+.modalHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.modalTitle{
+  font-weight:700;
+}
+.modalClose{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid var(--stroke);
+  background: transparent;
+  color: var(--text);
+  cursor:pointer;
+}
+.modalClose:hover{
+  background: rgba(255,255,255,.06);
+}
+.modalBody h3{
+  margin:12px 0 6px;
+  font-size:14px;
+}
+.modalBody p{
+  margin:0 0 10px;
+  color: var(--muted);
+  line-height:1.45;
+}
