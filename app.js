@@ -33,14 +33,15 @@
     export: {
       sizePx: 3000,
 
-      // TEXT (2 lines, above barcode)
+      // TOP TEXT (title)
       titleText: "Digital Employee ID Card",
       titleFontPx: 120,
+
+      // BOTTOM TEXT (employee ID)
       idFontPx: 72,
-      lineGapPx: 26,
 
       // QUIET ZONES (safe margins for scanning)
-      // With maxBW=2400 in a 3000px canvas => 300px each side minimum.
+      // With maxWidth=2400 in a 3000px canvas => 300px each side minimum.
       barcodeMaxWidthPx: 2400,
       barcodeMaxHeightPx: 1050,
     },
@@ -194,29 +195,29 @@
         const by = Math.round((S - bh) / 2);
         ctx.drawImage(img, bx, by, bw, bh);
 
-        // 2) TEXT BLOCK: centered between TOP EDGE and BARCODE TOP
-        const topSpace = by; // pixels from top edge to barcode top
-
+        // 2) TITLE: centered between TOP EDGE and BARCODE TOP
         const titlePx = config.export.titleFontPx;
         const idPx = config.export.idFontPx;
-        const gap = config.export.lineGapPx;
 
-        const blockH = titlePx + gap + idPx;
-        const blockTop = Math.round((topSpace - blockH) / 2);
+        const topSpace = by;
+        const titleTop = Math.round((topSpace - titlePx) / 2);
 
-        // Title line
         drawCenteredTextTop(
           ctx,
           config.export.titleText,
-          blockTop,
+          titleTop,
           `700 ${titlePx}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`
         );
 
-        // Employee ID (exactly what user entered)
+        // 3) EMPLOYEE ID: centered between BARCODE BOTTOM and BOTTOM EDGE
+        const bottomSpaceStart = by + bh;
+        const bottomSpaceHeight = S - bottomSpaceStart;
+        const idTop = Math.round(bottomSpaceStart + (bottomSpaceHeight - idPx) / 2);
+
         drawCenteredTextTop(
           ctx,
           state.rawId,
-          blockTop + titlePx + gap,
+          idTop,
           `600 ${idPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
         );
 
