@@ -13,6 +13,7 @@
   };
 
   const config = {
+    // On-page preview barcode (does NOT affect exported image)
     previewBarcode: {
       format: "upc",
       displayValue: false,
@@ -24,18 +25,24 @@
       lineColor: "#000000",
     },
 
+    // Export square JPG
     export: {
       sizePx: 3000,
 
+      // TOP TEXT (title)
       titleText: "Digital Employee ID Card",
       titleFontPx: 120,
+
+      // BOTTOM TEXT (employee ID)
       idFontPx: 72,
 
-      // quiet zones
+      // QUIET ZONES (safe margins for scanning)
+      // With maxWidth=2400 in a 3000px canvas => 300px each side minimum.
       barcodeMaxWidthPx: 2400,
       barcodeMaxHeightPx: 1050,
     },
 
+    // Barcode used for export SVG (we then scale into barcodeMaxWidth/Height)
     exportBarcode: {
       format: "upc",
       displayValue: false,
@@ -59,7 +66,8 @@
   }
 
   function upcACheckDigit(first11) {
-    let odd = 0, even = 0;
+    let odd = 0,
+      even = 0;
     for (let i = 0; i < 11; i++) {
       const d = first11.charCodeAt(i) - 48;
       i % 2 === 0 ? (odd += d) : (even += d);
@@ -171,7 +179,6 @@
         const idY = Math.round(
           bottomStart + (bottomHeight - config.export.idFontPx) / 2
         );
-
         drawText(
           ctx,
           state.rawId,
@@ -186,6 +193,11 @@
       } finally {
         URL.revokeObjectURL(url);
       }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      console.error("Failed to render barcode image for export.");
     };
 
     img.src = url;
@@ -210,19 +222,21 @@
   }
 
   function init() {
-  resetUI();
+    resetUI();
 
-  dom.idInput.addEventListener("input", () => {
-    dom.idInput.value = digitsOnly(dom.idInput.value);
-    // не генерируем автоматически
-  });
+    // IMPORTANT: do NOT auto-generate on input; only sanitize digits
+    dom.idInput.addEventListener("input", () => {
+      dom.idInput.value = digitsOnly(dom.idInput.value);
+    });
 
-  dom.idInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") render();
-  });
+    // Generate only on button (and Enter for convenience)
+    dom.idInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") render();
+    });
 
-  dom.btnGen.addEventListener("click", render);
-  dom.btnDownload.addEventListener("click", downloadLabelJpg);
-}
+    dom.btnGen.addEventListener("click", render);
+    dom.btnDownload.addEventListener("click", downloadLabelJpg);
+  }
+
   init();
 })();
