@@ -52,38 +52,38 @@
   </main>
 
   <!-- INFO MODAL (inserted between main and footer) -->
-  <div id="infoModal" class="modal" aria-hidden="true">
-    <div class="modalBackdrop" data-close="1"></div>
+  <!-- Info Modal -->
+<div id="infoModal" class="modal" aria-hidden="true">
+  <div class="modal__overlay" data-close="true"></div>
 
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
-      <div class="modalHeader">
-        <div id="infoTitle" class="modalTitle">Info</div>
-        <button id="infoClose" class="modalClose" type="button" aria-label="Close">✕</button>
-      </div>
+  <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="modal__header">
+      <div id="infoTitle" class="modal__title">Info</div>
+      <button id="infoClose" class="modal__close" type="button" aria-label="Close">✕</button>
+    </div>
 
-      <div class="modalBody">
-        <h3>How it works</h3>
-        <p>
-          Enter your Employee ID and press <b>Generate</b> (or hit <b>Enter</b>).<br/>
-          A valid <b>UPC-A</b> is created by padding the ID to 11 digits and calculating the
-          <b>check digit</b> (the last digit) using the GS1 standard.
-        </p>
+    <div class="modal__content">
+      <div class="modal__sectionTitle">Privacy</div>
+      <p class="modal__text">
+        Everything runs locally in your browser. No Employee IDs are sent or stored on a server.
+      </p>
 
-        <h3>Download</h3>
-        <p>
-          The badge is downloaded as a <b>JPG image</b> (3000 × 3000).<br/>
-          The file is saved to your device’s <b>Downloads</b> folder.
-        </p>
+      <div class="modal__sectionTitle">UPC-A</div>
+      <p class="modal__text">
+        UPC-A is 12 digits. The last digit is a check digit (GS1 Mod-10) calculated from the first 11 digits.
+      </p>
 
-        <h3>Privacy</h3>
-        <p>
-          No data is stored, uploaded, or shared.<br/>
-          Everything runs <b>locally in your browser</b>.
-        </p>
-      </div>
+      <div class="modal__sectionTitle">Download</div>
+      <p class="modal__text">
+        The file is downloaded as a JPG image and saved to your device’s Downloads folder.
+      </p>
+    </div>
+
+    <div class="modal__footer">
+      <button id="infoOk" class="modal__ok" type="button">Got it</button>
     </div>
   </div>
-
+</div>
   <footer class="page-footer">
     <div class="footer-line main">need a badge? we got you!</div>
     <div class="footer-line sub">needbadge.com</div>
