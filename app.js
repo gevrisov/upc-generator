@@ -1,214 +1,245 @@
-/* app.js — full file
-   - UPC-A generated ONLY on Generate click
-   - Download enabled only after successful generation
-   - Share QR button shows QR ONLY on click (fixed URL)
-*/
+(() => {
+  "use strict";
 
-const FIXED_QR_URL = "https://needbadge.com/";
+  const $ = (id) => {
+    const el = document.getElementById(id);
+    if (!el) throw new Error(`Missing element: #${id}`);
+    return el;
+  };
 
-const idInput = document.getElementById("idInput");
-const btnGen = document.getElementById("btnGen");
-const btnDownload = document.getElementById("btnDownload");
-const barcodeBox = document.getElementById("barcodeBox");
-const svgBarcode = document.getElementById("svgBarcode");
-const textOut = document.getElementById("textOut");
+  const dom = {
+    idInput: $("idInput"),
+    svg: $("svgBarcode"),
+    box: $("barcodeBox"),
+    out: $("textOut"),
+    btnGen: $("btnGen"),
+    btnDownload: $("btnDownload"),
+  };
 
-/* Share QR elements */
-const qrFab = document.getElementById("qrFab");
-const qrSheet = document.getElementById("qrSheet");
-const qrClose = document.getElementById("qrClose");
-const qrCodeEl = document.getElementById("qrCode");
+  const config = {
+    // On-page preview barcode (does NOT affect exported image)
+    previewBarcode: {
+      format: "upc",
+      displayValue: false,
+      flat: true,
+      height: 70,
+      width: 2,
+      margin: 0,
+      background: "#ffffff",
+      lineColor: "#000000",
+    },
 
-let lastEmployeeId = "";
-let lastUpc = "";
-let qrBuilt = false;
+    // Export square JPG
+    export: {
+      sizePx: 3000,
 
-function onlyDigits(s) {
-  return (s || "").replace(/\D+/g, "");
-}
+      // TOP TEXT (title)
+      titleText: "Digital Employee ID Card",
+      titleFontPx: 120,
 
-/* GS1 Mod-10 check digit for UPC-A on 11 digits */
-function upcCheckDigit(upc11) {
-  let sumOdd = 0;
-  let sumEven = 0;
+      // BOTTOM TEXT (employee ID)
+      idFontPx: 72,
 
-  for (let i = 0; i < upc11.length; i++) {
-    const d = upc11.charCodeAt(i) - 48;
-    const pos = i + 1;
-    if (pos % 2 === 1) sumOdd += d;
-    else sumEven += d;
+      // QUIET ZONES (safe margins for scanning)
+      // With maxWidth=2400 in a 3000px canvas => 300px each side minimum.
+      barcodeMaxWidthPx: 2400,
+      barcodeMaxHeightPx: 1050,
+    },
+
+    // Barcode used for export SVG (we then scale into barcodeMaxWidth/Height)
+    exportBarcode: {
+      format: "upc",
+      displayValue: false,
+      flat: true,
+      height: 180,
+      width: 4,
+      margin: 0,
+      background: "#ffffff",
+      lineColor: "#000000",
+    },
+  };
+
+  const state = {
+    upc12: "",
+    rawId: "",
+  };
+
+  // ---------- utils ----------
+  function digitsOnly(v) {
+    return String(v ?? "").replace(/\D/g, "");
   }
 
-  const total = sumOdd * 3 + sumEven;
-  const mod = total % 10;
-  return (10 - mod) % 10;
-}
-
-function makeUpcFromEmployeeId(empDigits) {
-  const padded11 = empDigits.padStart(11, "0").slice(-11);
-  const cd = upcCheckDigit(padded11);
-  return padded11 + String(cd);
-}
-
-function setDownloadEnabled(enabled) {
-  btnDownload.disabled = !enabled;
-  btnDownload.setAttribute("aria-disabled", String(!enabled));
-}
-
-function clearBarcode() {
-  textOut.textContent = "—";
-  barcodeBox.style.display = "none";
-  setDownloadEnabled(false);
-  while (svgBarcode.firstChild) svgBarcode.removeChild(svgBarcode.firstChild);
-}
-
-function renderBarcode(upc12) {
-  if (!window.JsBarcode) throw new Error("JsBarcode not loaded");
-
-  while (svgBarcode.firstChild) svgBarcode.removeChild(svgBarcode.firstChild);
-
-  JsBarcode(svgBarcode, upc12, {
-    format: "UPC",
-    displayValue: false,
-    margin: 16,         // quiet zone
-    background: "#ffffff",
-    lineColor: "#000000",
-    height: 110
-  });
-
-  barcodeBox.style.display = "block";
-}
-
-/* Generate ONLY on button click */
-btnGen.addEventListener("click", () => {
-  const emp = onlyDigits(idInput.value);
-  lastEmployeeId = emp;
-
-  if (!emp) {
-    clearBarcode();
-    return;
+  function upcACheckDigit(first11) {
+    let odd = 0, even = 0;
+    for (let i = 0; i < 11; i++) {
+      const d = first11.charCodeAt(i) - 48;
+      i % 2 === 0 ? (odd += d) : (even += d);
+    }
+    return String((10 - ((odd * 3 + even) % 10)) % 10);
   }
 
-  const upc12 = makeUpcFromEmployeeId(emp);
-  lastUpc = upc12;
-
-  try {
-    renderBarcode(upc12);
-    textOut.textContent = upc12;
-    setDownloadEnabled(true);
-  } catch (e) {
-    console.error(e);
-    clearBarcode();
+  function buildUpcA(raw) {
+    const d = digitsOnly(raw);
+    if (!d) return "";
+    if (d.length === 12) return d;
+    const base = d.padStart(11, "0").slice(-11);
+    return base + upcACheckDigit(base);
   }
-});
 
-/* Download (kept simple + safe)
-   - downloads the SVG barcode as PNG image (white background)
-   If you want the big 3000x3000 “card layout” again — скажи, и я добавлю
-   ТОЛЬКО это, не трогая остальное.
-*/
-btnDownload.addEventListener("click", async () => {
-  if (!lastUpc) return;
+  function clearSvg(svg) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+  }
 
-  try {
-    const svgText = new XMLSerializer().serializeToString(svgBarcode);
+  function setReady(ok) {
+    dom.btnDownload.disabled = !ok;
+    dom.btnDownload.setAttribute("aria-disabled", String(!ok));
+  }
 
-    const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
+  // ---------- preview ----------
+  function renderPreview(upc) {
+    dom.box.style.display = "block";
+    clearSvg(dom.svg);
 
-    const img = new Image();
-    img.decoding = "async";
-    img.src = url;
+    JsBarcode(dom.svg, upc, config.previewBarcode);
 
-    await new Promise((res, rej) => {
-      img.onload = () => res();
-      img.onerror = () => rej(new Error("Failed to load barcode SVG"));
-    });
+    dom.svg.removeAttribute("width");
+    dom.svg.removeAttribute("height");
+    const bb = dom.svg.getBBox();
+    dom.svg.setAttribute("viewBox", `0 0 ${bb.width} ${bb.height}`);
+    dom.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
 
-    // High quality export
-    const W = 1800;
-    const H = 800;
+  function resetUI() {
+    dom.box.style.display = "none";
+    dom.out.textContent = "—";
+    clearSvg(dom.svg);
+    state.upc12 = "";
+    state.rawId = "";
+    setReady(false);
+  }
+
+  // ---------- export helpers ----------
+  function makeBarcodeSvgUrl(upc) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    JsBarcode(svg, upc, config.exportBarcode);
+    const data = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([data], { type: "image/svg+xml" });
+    return URL.createObjectURL(blob);
+  }
+
+  function drawText(ctx, text, y, font) {
+    ctx.font = font;
+    ctx.fillStyle = "#000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(text, ctx.canvas.width / 2, y);
+  }
+
+  // ---------- export main ----------
+  function downloadLabelJpg() {
+    if (!state.upc12 || !state.rawId) return;
+
+    const S = config.export.sizePx;
     const canvas = document.createElement("canvas");
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = canvas.height = S;
     const ctx = canvas.getContext("2d");
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, S, S);
 
-    // draw barcode centered with safe margins
-    const pad = 80;
-    const targetW = W - pad * 2;
-    const scale = targetW / img.width;
-    const drawW = targetW;
-    const drawH = Math.round(img.height * scale);
+    const url = makeBarcodeSvgUrl(state.upc12);
+    const img = new Image();
 
-    const x = pad;
-    const y = Math.round((H - drawH) / 2);
+    img.onload = () => {
+      try {
+        const sw = img.width || 2000;
+        const sh = img.height || 600;
 
-    ctx.drawImage(img, x, y, drawW, drawH);
+        const scale = Math.min(
+          config.export.barcodeMaxWidthPx / sw,
+          config.export.barcodeMaxHeightPx / sh
+        );
 
-    URL.revokeObjectURL(url);
+        const bw = Math.round(sw * scale);
+        const bh = Math.round(sh * scale);
 
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const a = document.createElement("a");
-      const filename = `upc_${lastEmployeeId || lastUpc}.png`;
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-    }, "image/png", 1.0);
-  } catch (e) {
-    console.error(e);
+        // BARCODE — strictly centered
+        const bx = Math.round((S - bw) / 2);
+        const by = Math.round((S - bh) / 2);
+        ctx.drawImage(img, bx, by, bw, bh);
+
+        // TITLE — centered between top edge and barcode top
+        const titleY = Math.round((by - config.export.titleFontPx) / 2);
+        drawText(
+          ctx,
+          config.export.titleText,
+          titleY,
+          `700 ${config.export.titleFontPx}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`
+        );
+
+        // EMPLOYEE ID — centered between barcode bottom and bottom edge
+        const bottomStart = by + bh;
+        const bottomHeight = S - bottomStart;
+        const idY = Math.round(bottomStart + (bottomHeight - config.export.idFontPx) / 2);
+        drawText(
+          ctx,
+          state.rawId,
+          idY,
+          `600 ${config.export.idFontPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
+        );
+
+        const a = document.createElement("a");
+        a.href = canvas.toDataURL("image/jpeg", 1.0);
+        a.download = `EMPLOYEE_ID_${state.rawId}.jpg`;
+        a.click();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      console.error("Failed to render barcode image for export.");
+    };
+
+    img.src = url;
   }
-});
 
-/* ===== Share QR bottom sheet (ONLY on click) ===== */
+  // ---------- generate ----------
+  function render() {
+    const raw = digitsOnly(dom.idInput.value);
+    dom.idInput.value = raw;
 
-function buildQrOnce() {
-  if (qrBuilt) return;
+    if (!raw) {
+      resetUI();
+      return;
+    }
 
-  qrCodeEl.innerHTML = "";
+    state.rawId = raw;
+    state.upc12 = buildUpcA(raw);
 
-  if (!window.QRCode) {
-    qrCodeEl.textContent = "QR library not loaded (qrcodejs)";
-    qrBuilt = true;
-    return;
+    dom.out.textContent = state.upc12;
+    renderPreview(state.upc12);
+    setReady(true);
   }
 
-  new QRCode(qrCodeEl, {
-    text: FIXED_QR_URL,
-    width: 260,
-    height: 260,
-    correctLevel: QRCode.CorrectLevel.M
-  });
+  // ---------- init ----------
+  function init() {
+    resetUI();
 
-  qrBuilt = true;
-}
+    // do NOT auto-generate on input; only sanitize digits
+    dom.idInput.addEventListener("input", () => {
+      dom.idInput.value = digitsOnly(dom.idInput.value);
+    });
 
-function openQrSheet() {
-  qrSheet.classList.add("show");
-  qrSheet.setAttribute("aria-hidden", "false");
-  buildQrOnce();
-}
+    // Enter triggers Generate
+    dom.idInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") render();
+    });
 
-function closeQrSheet() {
-  qrSheet.classList.remove("show");
-  qrSheet.setAttribute("aria-hidden", "true");
-}
-
-qrFab.addEventListener("click", openQrSheet);
-qrClose.addEventListener("click", closeQrSheet);
-
-qrSheet.addEventListener("click", (e) => {
-  if (e.target === qrSheet) closeQrSheet();
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && qrSheet.classList.contains("show")) {
-    closeQrSheet();
+    dom.btnGen.addEventListener("click", render);
+    dom.btnDownload.addEventListener("click", downloadLabelJpg);
   }
-});
+
+  init();
+})();
