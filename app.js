@@ -240,3 +240,44 @@
 
   init();
 })();
+
+// ===== Fixed QR bottom sheet (independent UI) =====
+const FIXED_QR_URL = "https://needbadge.com/";
+
+const qrFab = document.getElementById("qrFab");
+const qrSheet = document.getElementById("qrSheet");
+const qrClose = document.getElementById("qrClose");
+const qrCodeEl = document.getElementById("qrCode");
+
+let qrMade = false;
+
+function openQr() {
+  qrSheet.classList.add("show");
+  qrSheet.setAttribute("aria-hidden", "false");
+
+  if (!qrMade) {
+    qrCodeEl.innerHTML = "";
+    new QRCode(qrCodeEl, {
+      text: FIXED_QR_URL,
+      width: 260,
+      height: 260,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+    qrMade = true;
+  }
+}
+
+function closeQr() {
+  qrSheet.classList.remove("show");
+  qrSheet.setAttribute("aria-hidden", "true");
+}
+
+qrFab.addEventListener("click", openQr);
+qrClose.addEventListener("click", closeQr);
+
+// close when tapping outside the card
+qrSheet.addEventListener("click", (e) => {
+  if (e.target === qrSheet) closeQr();
+});
