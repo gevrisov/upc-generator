@@ -402,16 +402,16 @@ body{
 
 .logo-center{
   position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;     /* вертикально по центру */
-  justify-content: center; /* горизонтально по центру */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
   pointer-events: none;
-  z-index: 1;
+  z-index: 0; /* ниже card */
 }
 
 .logo-center img{
   width: min(360px, 70vw);
   height: auto;
-  opacity: 0.08; /* мягко, как watermark */
+  opacity: 0.08;
 }
