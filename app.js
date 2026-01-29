@@ -274,34 +274,40 @@ updateUSTime();
 setInterval(updateUSTime, 1000);
 
 
-// =======================
-// Info modal (only UI)
-// =======================
+// ===== Info Modal (fixed) =====
 (() => {
   const infoBtn = document.getElementById("infoBtn");
-  const infoModal = document.getElementById("infoModal");
-  const infoClose = document.getElementById("infoClose");
+  const modal = document.getElementById("infoModal");
 
-  if (!infoBtn || !infoModal || !infoClose) return;
+  if (!infoBtn || !modal) return;
 
   const open = () => {
-    infoModal.classList.add("isOpen");
-    infoModal.setAttribute("aria-hidden", "false");
+    modal.classList.add("is-open");   // или "isOpen" — см. пункт 3 ниже
+    modal.setAttribute("aria-hidden", "false");
   };
 
   const close = () => {
-    infoModal.classList.remove("isOpen");
-    infoModal.setAttribute("aria-hidden", "true");
+    modal.classList.remove("is-open"); // или "isOpen"
+    modal.setAttribute("aria-hidden", "true");
   };
 
   infoBtn.addEventListener("click", open);
-  infoClose.addEventListener("click", close);
 
-  infoModal.addEventListener("click", (e) => {
-    if (e.target && e.target.getAttribute("data-close") === "1") close();
+  // Работает для ✕, Got it и клика по фону (и даже если ты поменяешь кнопки)
+  modal.addEventListener("click", (e) => {
+    const t = e.target;
+
+    // backdrop
+    if (t && t.dataset && t.dataset.close === "true") close();
+
+    // close button
+    if (t && t.id === "infoClose") close();
+
+    // got it button
+    if (t && t.id === "infoOk") close();
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && infoModal.classList.contains("isOpen")) close();
+    if (e.key === "Escape" && modal.classList.contains("is-open")) close(); // или "isOpen"
   });
 })();
